@@ -1,14 +1,25 @@
+import { ParticleManager } from './particle-manager';
+import { SandParticleHandler } from './particles/sand.particle-handler';
 import { WebGLSandRenderer } from './webglsandrenderser';
 
 export class Game {
   renderer: WebGLSandRenderer;
   canvas: HTMLCanvasElement;
+  particleManager: ParticleManager;
   isMouseDown: boolean = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.renderer = new WebGLSandRenderer(canvas, canvas.width, canvas.height);
+    this.initialiseParticleManager();
     this.addEventListeners();
+
+  }
+
+  initialiseParticleManager(): void {
+    this.particleManager = new ParticleManager(this);
+    this.particleManager.addParticleHandler(new SandParticleHandler(this.particleManager));
+    this.particleManager.initialise();
   }
 
   addEventListeners(): void {
@@ -25,7 +36,7 @@ export class Game {
 
     const x = event.clientX - rect.left;
     const y = rect.bottom - event.clientY;
-    this.renderer.setPixel(x, y, [255, 255, 255, 255]);
+    this.particleManager.addParticle("Sand",x, y);
   }
 
   start(): void {
@@ -35,7 +46,12 @@ export class Game {
     this.gameLoop();
   }
 
+  tick(): void {
+    this.particleManager.tick();
+  }
+
   private gameLoop(): void {
+    this.tick();
     this.renderer.update();
     requestAnimationFrame(() => this.gameLoop());
   }

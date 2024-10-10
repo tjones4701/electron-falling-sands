@@ -9,6 +9,7 @@ export class WebGLSandRenderer {
   positionLocation?: number | null;
   textureLocation?: WebGLUniformLocation | null;
   texture?: WebGLTexture | null;
+  errors?:Error[] = [];
 
   constructor(canvas, width, height) {
     this.canvas = canvas;
@@ -206,6 +207,9 @@ export class WebGLSandRenderer {
   }
 
   update(): void {
+    if (this.errors.length > 10) {
+      return;
+    }
     if (!this.dirtyPixels) {
       console.error('Dirty pixels array is not initialized');
       return;
@@ -223,11 +227,15 @@ export class WebGLSandRenderer {
       return;
     }
 
-    console.log('Updating dirty pixels:', this.dirtyPixels);
-
     try {
       for (const { x, y } of this.dirtyPixels) {
         const index = (y * this.width + x) * 4;
+
+        // Ensure index is within bounds
+        if (index < 0 || index + 5 > this.pixelData.buffer.byteLength) {
+          throw new Error(`Index out of bounds: ${index}, x:${x}${y}`);
+        }
+
         const pixel = new Uint8Array(this.pixelData.buffer, index, 4);
 
         // Ensure the texture is bound before updating
@@ -237,14 +245,14 @@ export class WebGLSandRenderer {
         // Check for errors before the call
         let error = this.gl.getError();
         if (error !== this.gl.NO_ERROR) {
-          console.error(`WebGL error before texSubImage2D: ${error}`);
+          throw new Error(`WebGL error before texSubImage2D: ${error}`);
         }
 
         this.gl.texSubImage2D(
           this.gl.TEXTURE_2D,
           0,
-          x,
-          y,
+          x + 1,
+          y + 1,
           1,
           1,
           this.gl.RGBA,
@@ -255,10 +263,13 @@ export class WebGLSandRenderer {
         // Check for errors after the call
         error = this.gl.getError();
         if (error !== this.gl.NO_ERROR) {
-          console.error(`WebGL error after texSubImage2D: ${error}`);
+          throw new Error(`WebGL error after texSubImage2D: ${error}`);
         }
+        this.errors = [];
       }
     } catch (error) {
+      this.errors.push(error);
+      console.log(this.pixelData.buffer);
       console.error('Error updating dirty pixels:', error);
     }
 
