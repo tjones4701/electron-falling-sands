@@ -12,7 +12,6 @@ export class Game {
     [key: string]: boolean;
   } = {};
   currentParticleType: string = 'Sand';
-  lastTickTime = 0;
   mouseInputs: {
     left: boolean;
     right: boolean;
@@ -21,7 +20,7 @@ export class Game {
     y: number
   } = { left: false, right: false, middle: false, x: 0,y: 0 };
 
-  cursorRadius = 2;
+  cursorRadius = 8;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -98,6 +97,7 @@ export class Game {
       this.changeParticleType(-1);
     }
 
+    console.log(key);
   }
   onKeyup(key: string): void {
     this.inputs[key] = false;
@@ -137,14 +137,11 @@ export class Game {
         for (let dy = -this.cursorRadius; dy <= this.cursorRadius; dy++) {
           const distance = Math.sqrt(dx * dx + dy * dy);
           if (distance <= this.cursorRadius) {
-            if (particleType == 'Air') {
-              this.particleManager?.removeParticle(position.x + dx, position.y + dy);
-            } else {
-              this.particleManager?.addParticle(particleType, position.x + dx, position.y + dy);
-            }
+        this.particleManager?.addParticle(particleType, position.x + dx, position.y + dy);
           }
         }
       }
+      this.particleManager?.addParticle(particleType,position.x, position.y);
     }
   }
 
@@ -155,19 +152,14 @@ export class Game {
   tick(delta:number): void {
     for(const type in this.particleManager?.particleTypes) {
       const handler = this.particleManager?.particleTypes[type];
-      handler.tick(delta);
+      handler.tick();
     }
 
     this.particleManager?.tick();
   }
 
   private gameLoop(): void {
-    if (this.lastTickTime === 0) {
-      this.lastTickTime = Date.now();
-    }
-    const delta = Date.now() - this.lastTickTime;
-
-    this.tick(delta);
+    this.tick();
     this.renderer.update();
     this.renderer.render();
     requestAnimationFrame(() => this.gameLoop());
