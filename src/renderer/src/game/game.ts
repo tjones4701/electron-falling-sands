@@ -1,6 +1,8 @@
 import { ParticleManager } from './particle-manager';
+import { ConcreteParticleHandler } from './particles/concrete.particle-handler copy';
 import { SandParticleHandler } from './particles/sand.particle-handler';
 import { VineParticleHandler } from './particles/vine-particle-handler';
+import { VirusParticleHandler } from './particles/virus.particle-handler';
 import { WaterParticleHandler } from './particles/water.particle-handler';
 import { WebGLSandRenderer } from './webglsandrenderser';
 
@@ -21,7 +23,7 @@ export class Game {
     y: number
   } = { left: false, right: false, middle: false, x: 0,y: 0 };
 
-  cursorRadius = 2;
+  cursorRadius = 4;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -35,6 +37,8 @@ export class Game {
     this.particleManager.addParticleHandler(new SandParticleHandler(this.particleManager));
     this.particleManager.addParticleHandler(new WaterParticleHandler(this.particleManager));
     this.particleManager.addParticleHandler(new VineParticleHandler(this.particleManager));
+    this.particleManager.addParticleHandler(new ConcreteParticleHandler(this.particleManager));
+    this.particleManager.addParticleHandler(new VirusParticleHandler(this.particleManager));
     this.particleManager.initialise();
   }
 
