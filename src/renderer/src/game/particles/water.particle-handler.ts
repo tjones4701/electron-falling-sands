@@ -27,14 +27,20 @@ export class WaterParticleHandler extends ParticleHandler {
     if (moveBelow) {
       return;
     }
+    const currentTick = this?.Manager?.currentTick ?? 0;
 
-    const nextPosition = particle.x % 2 === 0 ? -1 : 1;
-    const moveNext = this.tryToMoveToPosition(particle, particle.x + nextPosition, particle.y);
-    if (moveNext) {
+    const nextPosition = (particle.x + currentTick) % 2 === 0 ? -1 : 1;let nextY = particle.y - 1;
+    if (this.tryToMoveToPosition(particle, particle.x + nextPosition, nextY)) {
       return;
     }
-    const otherMoveNext = this.tryToMoveToPosition(particle, particle.x - nextPosition, particle.y);
-    if (otherMoveNext) {
+    if (this.tryToMoveToPosition(particle, particle.x - nextPosition, nextY)) {
+      return;
+    }
+    nextY = particle.y;
+    if (this.tryToMoveToPosition(particle, particle.x + nextPosition, nextY)) {
+      return;
+    }
+    if (this.tryToMoveToPosition(particle, particle.x - nextPosition, nextY)) {
       return;
     }
   }

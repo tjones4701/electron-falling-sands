@@ -28,8 +28,8 @@ export class Game {
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    const width = 600;
-    const height = 600;
+    const width = 400;
+    const height = 400;
 
     canvas.style.width = width + 'px';
     canvas.style.height = height + 'px';

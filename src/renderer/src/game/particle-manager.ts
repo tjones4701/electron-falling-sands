@@ -80,8 +80,8 @@ export class ParticleManager {
       if (particles.dirty) {
         return;
       }
-      this.markAreaDirty(particles);
       particles.dirty = true;
+      this.markAreaDirty(particles);
       return;
     }
 
@@ -129,9 +129,10 @@ export class ParticleManager {
     oldP.y = newY;
     newP.x = oldX;
     newP.y = oldY;
+    this.updateParticles([oldP, newP]);
     this.markNeighboursDirty(oldP);
     this.markNeighboursDirty(newP);
-    this.updateParticles([oldP, newP]);
+
   }
 
   removeParticle(x: number, y: number): void {
@@ -147,25 +148,49 @@ export class ParticleManager {
     if (particle.x > 0) {
       const leftNeighbour = this.particles[particle.x - 1][particle.y];
       if (!leftNeighbour.dirty) {
-        this.updateParticles(leftNeighbour);
+      this.updateParticles(leftNeighbour);
       }
     }
     if (particle.x < this.size.x - 1) {
       const rightNeighbour = this.particles[particle.x + 1][particle.y];
       if (!rightNeighbour.dirty) {
-        this.updateParticles(rightNeighbour);
+      this.updateParticles(rightNeighbour);
       }
     }
     if (particle.y > 0) {
       const topNeighbour = this.particles[particle.x][particle.y - 1];
       if (!topNeighbour.dirty) {
-        this.updateParticles(topNeighbour);
+      this.updateParticles(topNeighbour);
       }
     }
     if (particle.y < this.size.y - 1) {
       const bottomNeighbour = this.particles[particle.x][particle.y + 1];
       if (!bottomNeighbour.dirty) {
-        this.updateParticles(bottomNeighbour);
+      this.updateParticles(bottomNeighbour);
+      }
+    }
+    if (particle.x > 0 && particle.y > 0) {
+      const topLeftNeighbour = this.particles[particle.x - 1][particle.y - 1];
+      if (!topLeftNeighbour.dirty) {
+      this.updateParticles(topLeftNeighbour);
+      }
+    }
+    if (particle.x < this.size.x - 1 && particle.y > 0) {
+      const topRightNeighbour = this.particles[particle.x + 1][particle.y - 1];
+      if (!topRightNeighbour.dirty) {
+      this.updateParticles(topRightNeighbour);
+      }
+    }
+    if (particle.x > 0 && particle.y < this.size.y - 1) {
+      const bottomLeftNeighbour = this.particles[particle.x - 1][particle.y + 1];
+      if (!bottomLeftNeighbour.dirty) {
+      this.updateParticles(bottomLeftNeighbour);
+      }
+    }
+    if (particle.x < this.size.x - 1 && particle.y < this.size.y - 1) {
+      const bottomRightNeighbour = this.particles[particle.x + 1][particle.y + 1];
+      if (!bottomRightNeighbour.dirty) {
+      this.updateParticles(bottomRightNeighbour);
       }
     }
   }
@@ -227,6 +252,27 @@ export class ParticleManager {
 
     return dirtyAreas;
   }
+  /**
+   * This will make a particle dirty based on the current tick of the game
+   */
+  unstick(): void {
+    const totalParticles = this.size.x * this.size.y;
+    const particlesToUnstick = 4;
+
+    const particleIndex = (this.currentTick % totalParticles) / particlesToUnstick;
+
+
+    for (let i = 0; i < particlesToUnstick; i++) {
+      const particleX = particleIndex % this.size.x;
+      const particleY = Math.floor(particleIndex / this.size.x);
+      const particle = this.particles[particleX][particleY];
+      if (particle.type !== 'Air') {
+        this.updateParticles(particle);
+        this.markNeighboursDirty(particle);
+      }
+      this.game.renderer.setPixel(particleX, particleY + i, [180,180,180,255]);
+    }
+  }
 
   tick(): void {
     if (this.paused) {
@@ -285,11 +331,16 @@ export class ParticleManager {
 
     for (const particle of particlesToUpdate) {
       particle.dirty = false;
+
+      this.game.renderer.setPixel(particle.x, particle.y, this.getParticleColor(particle));
+    }
+    for (const particle of particlesToUpdate) {
       const handler = this.particleTypes[particle.type];
       if (handler) {
         handler.update(particle);
       }
       this.game.renderer.setPixel(particle.x, particle.y, this.getParticleColor(particle));
     }
+    this.unstick();
   }
 }
