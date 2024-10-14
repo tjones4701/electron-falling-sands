@@ -20,14 +20,20 @@ export class Game {
     right: boolean;
     middle: boolean;
     x: number;
-    y: number
-  } = { left: false, right: false, middle: false, x: 0,y: 0 };
+    y: number;
+  } = { left: false, right: false, middle: false, x: 0, y: 0 };
+  isExecuting = false;
 
   cursorRadius = 4;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    this.renderer = new WebGLSandRenderer(canvas, canvas.width, canvas.height);
+    const width = 600;
+    const height = 600;
+
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+    this.renderer = new WebGLSandRenderer(canvas, width, height);
     this.initialiseParticleManager();
     this.addEventListeners();
   }
@@ -77,6 +83,14 @@ export class Game {
     });
   }
 
+  reset(): void {
+    this.particleManager?.reset();
+  }
+
+  setParticleType(type: string): void {
+    this.currentParticleType = type;
+  }
+
   changeParticleType(inc: number): void {
     const particleTypes = this.particleManager?.getParticleTypes();
     if (!particleTypes) {
@@ -101,7 +115,6 @@ export class Game {
     } else if (key == 'ArrowDown') {
       this.changeParticleType(-1);
     }
-
   }
   onKeyup(key: string): void {
     this.inputs[key] = false;
@@ -116,20 +129,18 @@ export class Game {
       particleType = this.currentParticleType;
     }
     if (this.mouseInputs.right) {
-      particleType = "Air";
+      particleType = 'Air';
     }
 
-
     const rect = this.canvas.getBoundingClientRect();
-    const x = (event.clientX - rect.left);
-    const y = (rect.bottom - event.clientY);
+    const x = event.clientX - rect.left;
+    const y = rect.bottom - event.clientY;
 
     this.mouseInputs.x = x;
     this.mouseInputs.y = y;
 
     const deltaX = this.mouseInputs.x - oldX;
     const deltaY = this.mouseInputs.y - oldY;
-
 
     if (this.mouseInputs.middle) {
       this.renderer.moveCamera(-deltaX, -deltaY);
@@ -154,24 +165,30 @@ export class Game {
 
   start(): void {
     this.gameLoop();
+    setInterval(() => this.tick(), 0);
   }
 
-  tick(delta:number): void {
-    for(const type in this.particleManager?.particleTypes) {
-      const handler = this.particleManager?.particleTypes[type];
-      handler.tick(delta);
+  tick(): void {
+    if (this.isExecuting) {
+      return;
     }
 
-    this.particleManager?.tick();
-  }
-
-  private gameLoop(): void {
     if (this.lastTickTime === 0) {
       this.lastTickTime = Date.now();
     }
     const delta = Date.now() - this.lastTickTime;
 
-    this.tick(delta);
+    for (const type in this.particleManager?.particleTypes) {
+      const handler = this.particleManager?.particleTypes[type];
+      handler.tick(delta);
+    }
+
+    this.particleManager?.tick();
+
+    this.isExecuting = false;
+  }
+
+  private gameLoop(): void {
     this.renderer.update();
     this.renderer.render();
     requestAnimationFrame(() => this.gameLoop());

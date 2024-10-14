@@ -1,5 +1,5 @@
-import { Game } from "./game";
-import { ParticleHandler } from "./particles/_particles";
+import { Game } from './game';
+import { ParticleHandler } from './particles/_particles';
 
 export type ParticleInstanceType = string;
 export type ParticleInstance = {
@@ -8,15 +8,14 @@ export type ParticleInstance = {
   y: number;
   density?: number;
   dirty?: boolean;
-}
+};
 
 export type ParticleArea = {
   x: number;
   y: number;
   dirty?: boolean;
   particles?: ParticleInstance[];
-}
-
+};
 
 export class ParticleManager {
   public currentTick = 0;
@@ -26,13 +25,14 @@ export class ParticleManager {
   public maxParticleAreasToUpdate = 8;
   public baseParticleHandler = new ParticleHandler(this);
   public lastTickTime = 0;
+  paused = false;
   public particleAreaSize = {
     x: 80,
     y: 60
   };
   public particleAreaCounts = {
-    x: 10,
-    y: 10
+    x: 5,
+    y: 5
   };
   public game: Game;
   public size = {
@@ -42,12 +42,27 @@ export class ParticleManager {
 
   constructor(game: Game) {
     this.game = game;
+    this.size.x = game.renderer.width;
+    this.size.y = game.renderer.height;
+    this.particleAreaSize = {
+      x: Math.ceil(this.size.x / this.particleAreaCounts.x),
+      y: Math.ceil(this.size.y / this.particleAreaCounts.y)
+    };
   }
 
   getParticleArea(x: number, y: number): ParticleArea {
     const xIndex = Math.floor(x / this.particleAreaSize.x);
     const yIndex = Math.floor(y / this.particleAreaSize.y);
     return this.particleAreas[xIndex][yIndex];
+  }
+
+  reset(): void {
+    this.paused = true;
+    this.particles = [];
+    this.particleAreas = [];
+    this.game.renderer.clear();
+    this.initialise();
+    this.paused = false;
   }
 
   markAreaDirty(particleInstance: ParticleInstance): void {
@@ -59,7 +74,6 @@ export class ParticleManager {
     particleArea.dirty = true;
     particleArea.particles?.push(particleInstance);
   }
-
 
   updateParticles(particles: ParticleInstance | ParticleInstance[]): void {
     if (!Array.isArray(particles)) {
@@ -81,12 +95,13 @@ export class ParticleManager {
   }
 
   initialise(): void {
+    this.lastTickTime = 0;
     const newParticles: ParticleInstance[][] = [];
     // Initialize the new 2D array
     for (let i = 0; i < this.size.x; i++) {
       newParticles[i] = [];
       for (let j = 0; j < this.size.y; j++) {
-        newParticles[i][j] = {x:i, y:j, type:"Air"};
+        newParticles[i][j] = { x: i, y: j, type: 'Air' };
       }
     }
     this.particleAreaSize = {
@@ -94,14 +109,15 @@ export class ParticleManager {
       y: Math.ceil(this.size.y / this.particleAreaCounts.y)
     };
 
-
     this.particles = newParticles;
     for (let i = 0; i < this.particleAreaCounts.x; i++) {
       this.particleAreas[i] = [];
       for (let j = 0; j < this.particleAreaCounts.y; j++) {
-        this.particleAreas[i][j] = {dirty: false, particles: [], x: i, y: j};
+        this.particleAreas[i][j] = { dirty: false, particles: [], x: i, y: j };
       }
     }
+
+    this.paused = false;
   }
 
   swapParticlePositions(oldX: number, oldY: number, newX: number, newY: number): void {
@@ -119,7 +135,7 @@ export class ParticleManager {
   }
 
   removeParticle(x: number, y: number): void {
-    const newParticle = this.addParticle("Air", x, y);
+    const newParticle = this.addParticle('Air', x, y);
     this.markNeighboursDirty(newParticle);
   }
 
@@ -137,7 +153,7 @@ export class ParticleManager {
     if (particle.x < this.size.x - 1) {
       const rightNeighbour = this.particles[particle.x + 1][particle.y];
       if (!rightNeighbour.dirty) {
-      this.updateParticles(rightNeighbour);
+        this.updateParticles(rightNeighbour);
       }
     }
     if (particle.y > 0) {
@@ -177,7 +193,7 @@ export class ParticleManager {
     const handler = this.getParticleHandler(type);
     const newParticle = {
       x: x,
-      y:y,
+      y: y,
       type: type,
       dirty: false,
       ...handler.createParticle()
@@ -188,7 +204,6 @@ export class ParticleManager {
     handler.onCreateParticle(newParticle);
     return newParticle;
   }
-
 
   getParticleColor(particle: ParticleInstance): number[] {
     const handler = this.particleTypes[particle.type];
@@ -201,8 +216,8 @@ export class ParticleManager {
   getDirtyParticleAreas(): ParticleArea[] {
     const dirtyAreas: ParticleArea[] = [];
 
-    for(let y = this.particleAreaCounts.y-1; y >= 0; y--) {
-      for(let x = this.particleAreaCounts.x-1; x >=0; x--) {
+    for (let y = this.particleAreaCounts.y - 1; y >= 0; y--) {
+      for (let x = this.particleAreaCounts.x - 1; x >= 0; x--) {
         const particleArea = this.particleAreas[x][y];
         if (particleArea.dirty) {
           dirtyAreas.push(particleArea);
@@ -213,8 +228,10 @@ export class ParticleManager {
     return dirtyAreas;
   }
 
-
   tick(): void {
+    if (this.paused) {
+      return;
+    }
     if (this.lastTickTime === 0) {
       this.lastTickTime = Date.now();
     }
@@ -230,7 +247,6 @@ export class ParticleManager {
       this.maxParticleAreasToUpdate = this.maxParticleAreasToUpdate + 5;
     }
 
-
     if (this.maxParticleAreasToUpdate < 8) {
       this.maxParticleAreasToUpdate = 8;
     }
@@ -241,33 +257,31 @@ export class ParticleManager {
     this.currentTick = this.currentTick + 1;
     const particlesToUpdate: ParticleInstance[] = [];
 
-
     let currentUpdates = 0;
     const dirtyParticleAreas = this.getDirtyParticleAreas();
 
-    for(const particleArea of dirtyParticleAreas) {
-        currentUpdates = currentUpdates + 1;
-        if (currentUpdates > this.maxParticleAreasToUpdate) {
-          break;
-        }
-        if (!particleArea.dirty) {
-          continue;
-        }
-
-        particleArea.dirty = false;
-
-        const particles = particleArea.particles;
-        if (!particles) {
-          continue;
-        }
-        for (const particle of particles) {
-          if (particle.dirty) {
-            particlesToUpdate.push(particle);
-          }
-        }
-        particleArea.particles = [];
+    for (const particleArea of dirtyParticleAreas) {
+      currentUpdates = currentUpdates + 1;
+      if (currentUpdates > this.maxParticleAreasToUpdate) {
+        break;
+      }
+      if (!particleArea.dirty) {
+        continue;
       }
 
+      particleArea.dirty = false;
+
+      const particles = particleArea.particles;
+      if (!particles) {
+        continue;
+      }
+      for (const particle of particles) {
+        if (particle.dirty) {
+          particlesToUpdate.push(particle);
+        }
+      }
+      particleArea.particles = [];
+    }
 
     for (const particle of particlesToUpdate) {
       particle.dirty = false;
