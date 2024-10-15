@@ -57,7 +57,8 @@ export class ParticleHandler
         return this.getParticle(x, y)?.type ?? "";
     }
 
-    getColor(): number[] {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    getColor(_particle: ParticleInstance): number[] {
         return [0, 0, 0, 255];
     }
 

@@ -1,10 +1,12 @@
 import { ParticleManager } from './particle-manager';
 import { ConcreteParticleHandler } from './particles/concrete.particle-handler copy';
+import { SmokeParticleHandler } from './particles/smoke.particle-handler';
 import { SandParticleHandler } from './particles/sand.particle-handler';
 import { VineParticleHandler } from './particles/vine-particle-handler';
 import { VirusParticleHandler } from './particles/virus.particle-handler';
 import { WaterParticleHandler } from './particles/water.particle-handler';
 import { WebGLSandRenderer } from './webglsandrenderser';
+import { FireParticleHandler } from './particles/fire.particle-handler';
 
 export class Game {
   renderer: WebGLSandRenderer;
@@ -45,6 +47,8 @@ export class Game {
     this.particleManager.addParticleHandler(new VineParticleHandler(this.particleManager));
     this.particleManager.addParticleHandler(new ConcreteParticleHandler(this.particleManager));
     this.particleManager.addParticleHandler(new VirusParticleHandler(this.particleManager));
+    this.particleManager.addParticleHandler(new SmokeParticleHandler(this.particleManager));
+    this.particleManager.addParticleHandler(new FireParticleHandler(this.particleManager));
     this.particleManager.initialise();
   }
 

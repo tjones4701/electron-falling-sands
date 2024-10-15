@@ -2,12 +2,13 @@ import { Game } from './game';
 import { ParticleHandler } from './particles/_particles';
 
 export type ParticleInstanceType = string;
-export type ParticleInstance = {
+export type ParticleInstance<TData = unknown> = {
   type: ParticleInstanceType;
   x: number;
   y: number;
   density?: number;
   dirty?: boolean;
+  data?: TData;
 };
 
 export type ParticleArea = {
@@ -233,7 +234,7 @@ export class ParticleManager {
   getParticleColor(particle: ParticleInstance): number[] {
     const handler = this.particleTypes[particle.type];
     if (handler) {
-      return handler.getColor();
+      return handler.getColor(particle);
     }
     return [0, 0, 0, 255];
   }
@@ -270,7 +271,7 @@ export class ParticleManager {
         this.updateParticles(particle);
         this.markNeighboursDirty(particle);
       }
-      this.game.renderer.setPixel(particleX, particleY + i, [180,180,180,255]);
+      // this.game.renderer.setPixel(particleX, particleY + i, [180,180,180,255]);
     }
   }
 
